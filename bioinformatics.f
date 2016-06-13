@@ -163,12 +163,6 @@ stalim allocate throw dup constant staddr clearbuf
   soverlen 1+ 0 do i i 0 distad ! loop
   sduplen 1+ 0 do i 0 i distad ! loop ;
 
-: firststrlett \ s1 s2 -- s1 s2 | j -- bj
-  st@ drop 1- + c@ ;
-
-: secondstrlett \ s1 s2 -- s1 s2 | i -- ai
-  1 spickad drop 1- + c@ ;
-
 : editdistance \ s1 s2 -- s1 s2 | -- n
   distinit sduplen 1+ 1
   do soverlen 1+ 1
