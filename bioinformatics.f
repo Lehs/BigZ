@@ -173,7 +173,7 @@ false [if]
 : secondstrlett \ s1 s2 -- s1 s2 | i -- ai
   1 spickad drop 1- + c@ ;
 
-: editdistance \ s1 s2 -- s1 s2
+: editdistance \ s1 s2 -- s1 s2 | -- n
   distinit sduplen 1+ 1
   do soverlen 1+ 1
      do i secondstrlett j firststrlett =
