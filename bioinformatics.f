@@ -85,24 +85,20 @@ stalim allocate throw dup constant staddr clearbuf
 : secondstrlett \ s1 s2 -- s1 s2 | i -- ai
   1 spickad drop 1- + c@ ;
 
-: sincl \ s1 s2 -- s1 s3 s1 s4 / -- s2 | -- flag 
+: sincl \ s1 s2 -- s1 s3 s1 s4 / s2 | -- flag 
   soverlen                   \ m
   st@ 1 spickad search       \ m ad n f
-\ snip
   if nip sduplen swap -      \ m k-n
      ssplit                  \ m 
      ssplit true    
   else 2drop drop false 
   then ;
 
-false [if]
 \ replace s2 with s1 wherever in s3
 : sreplace \ s1 s2 s3 -- s4
   begin sincl
-  while snip sswap stuck s& s&
-  repeat ;
-
-[then]
+  while snip 3 spick sswap s& s&
+  repeat snip snip ;
 
 : scomp \ s1 s2 -- | -- n
   st> st> 2swap compare ;
