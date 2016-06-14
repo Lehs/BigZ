@@ -50,9 +50,9 @@ stalim allocate throw dup constant staddr clearbuf
 : sdup stp @ ist@ >st ;
 : sdrop st> 2drop ;
 : sover stp @ 1- ist@ >st ;
+: soover stp @ 2 - ist@ >st ;
 : snip st> sdrop >st ;
 : sswap sover st> st> sdrop >st >st ;
-: soover stp @ 2 - ist@ >st ;
 : srot soover st> st> st> sdrop >st >st >st ;
 : stuck sswap sover ;
 : spick spickad >st ;
@@ -65,6 +65,9 @@ stalim allocate throw dup constant staddr clearbuf
 
 : sduplen \ s -- s | -- n
   st@ nip ;
+  
+: soverlen \ s1 s2 -- s1 s2 | -- n
+  1 spickad nip ;
 
 : sleft \ s -- s' | n --   the n leftmost chars
   st> drop swap >st ;
@@ -76,16 +79,14 @@ stalim allocate throw dup constant staddr clearbuf
   sdup dup sleft sswap
   sduplen swap - sright ;
 
-: soverlen \ s1 s2 -- s1 s2 | -- n
-  1 spickad nip ;
-
-: firststrlett \ s1 s2 -- s1 s2 | j -- bj
+: firststrlett \ s1 s2 -- s1 s2 | j -- bj    (in s2)
   st@ drop 1- + c@ ;
 
 : secondstrlett \ s1 s2 -- s1 s2 | i -- ai
   1 spickad drop 1- + c@ ;
 
-: sincl \ s1 s2 -- s1 s3 s1 s4 / s2 | -- flag 
+\ split s2 if s1 is a part of s2 (true flag)
+: sanalyze \ s1 s2 -- s1 s3 s1 s4 / s2 | -- flag 
   soverlen                   \ m
   st@ 1 spickad search       \ m ad n f
   if nip sduplen swap -      \ m k-n
@@ -94,14 +95,19 @@ stalim allocate throw dup constant staddr clearbuf
   else 2drop drop false 
   then ;
 
+: substring \ s1 s2 -- s1 s2 | -- flag
+  st@ 1 spickad search nip nip ;
+
 \ replace s2 with s1 wherever in s3
 : sreplace \ s1 s2 s3 -- s4
-  begin sincl
+  begin sanalyze
   while snip 3 spick sswap s& s&
   repeat snip snip ;
 
-: scomp \ s1 s2 -- | -- n
+: scomp \ s1 s2 -- | -- n    -1:s1>s2, +1:s1<s2, 0:s1=s2
   st> st> 2swap compare ;
+
+: snull pad 0 >st ; \ put an empty string on the stack
 
 : schr& \ s -- s' | ch --
   >r st> 2dup + r> swap c! 1+ >st ;
@@ -117,15 +123,33 @@ stalim allocate throw dup constant staddr clearbuf
 
 : slen= \ s1 s2 -- | -- flag
   st> nip st> nip = ;
+  
+: strail \ s -- s'   remove ending spaces
+  st@ -trailing ;
 
-: hamming \ s1 s2 -- s1 s2 | -- n
+: slower \ s -- s'   lower letters, english
+  st@ over + swap
+  do i c@ [char] A [char] Z 1+ within
+     if i c@ [char] ` or i c! then
+  loop ;
+  
+: supper \ s -- s'   upper letters, english
+  st@ over + swap
+  do i c@ [char] a [char] z 1+ within 
+     if i c@ [char] _ and i c! then
+  loop ;
+  
+: str>ud \ s -- s' | -- ud flag
+  0. st@ dup >r >number dup >r >st snip 2r> > ;
+
+: hamming \ s1 s2 -- s1 s2 | -- n   hamming distance
   0 1 spickad drop st@ 0
   do over i + c@ 
      over i + c@ = 0=
      if rot 1+ -rot then
   loop 2drop ;
 
-: indfun \ s1 s2 -- s1 s2 | i j -- n
+: indfun \ s1 s2 -- s1 s2 | i j -- n   the indicator function
   1 spickad drop rot 1- + c@
   st@ drop rot 1- + c@ = 1+ ;
 
@@ -136,23 +160,8 @@ stalim allocate throw dup constant staddr clearbuf
   over 1- over 1- recurse -rot 
   indfun + r> min ;
 
-: levenshtein \ s1 s2 -- s1 s2 | -- n
+: levenshtein \ s1 s2 -- s1 s2 | -- n  Levenshtein distance, slower
   soverlen sduplen levensh ;
-
-: strail \ s -- s'
-  st@ -trailing ;
-
-: slower \ s -- s'
-  st@ over + swap
-  do i c@ [char] A [char] Z 1+ within
-     if i c@ [char] ` or i c! then
-  loop ;
-  
-: supper \ s -- s'
-  st@ over + swap
-  do i c@ [char] a [char] z 1+ within 
-     if i c@ [char] _ and i c! then
-  loop ;
 
 \ Wagner-Fischer algorithm
 
@@ -163,7 +172,7 @@ stalim allocate throw dup constant staddr clearbuf
   soverlen 1+ 0 do i i 0 distad ! loop
   sduplen 1+ 0 do i 0 i distad ! loop ;
 
-: editdistance \ s1 s2 -- s1 s2 | -- n
+: editdistance \ s1 s2 -- s1 s2 | -- lev    Levenshtein distance, faster
   distinit sduplen 1+ 1
   do soverlen 1+ 1
      do i secondstrlett j firststrlett =
@@ -175,4 +184,3 @@ stalim allocate throw dup constant staddr clearbuf
         then i j distad !
      loop 
   loop soverlen sduplen distad @ ;
-
