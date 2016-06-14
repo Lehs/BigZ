@@ -13,7 +13,7 @@ stlim allocate throw dup constant stbuf clearbuf
 stalim allocate throw dup constant staddr clearbuf
 \ address buffer, at staddr is loaded address to first free cell
 
-: >st \ ad n -- 
+: >st \ ad n --    put string on stack
   tuck             \ n ad n
   stbuf @ dup      \ n ad n a a
   staddr @ !       \ n ad n a
@@ -79,7 +79,7 @@ stalim allocate throw dup constant staddr clearbuf
   sdup dup sleft sswap
   sduplen swap - sright ;
 
-: firststrlett \ s1 s2 -- s1 s2 | j -- bj    (in s2)
+: firststrlett \ s1 s2 -- s1 s2 | j -- bj    (in s2) j>0
   st@ drop 1- + c@ ;
 
 : secondstrlett \ s1 s2 -- s1 s2 | i -- ai
@@ -141,10 +141,14 @@ stalim allocate throw dup constant staddr clearbuf
   
 : str>ud \ s -- s' | -- ud flag
   0. st@ dup >r >number dup >r >st snip 2r> > ;
+  
+: str>d \ s -- s' | -- d flag
+  1 firststrlett [char] - = dup
+  if sduplen 1- sright
+  then str>ud >r rot if dnegate then r> ;
 
 : hamming \ s1 s2 -- s1 s2 | -- n   hamming distance
-  0 1 spickad drop st@ 0
-  do over i + c@ 
+  0 1 spickad drop st@ 0  do over i + c@ 
      over i + c@ = 0=
      if rot 1+ -rot then
   loop 2drop ;
@@ -153,8 +157,7 @@ stalim allocate throw dup constant staddr clearbuf
   1 spickad drop rot 1- + c@
   st@ drop rot 1- + c@ = 1+ ;
 
-: levensh \ s1 s2 -- s1 s2 | i j -- n
-  2dup min 0= if max exit then
+: levensh \ s1 s2 -- s1 s2 | i j -- n  2dup min 0= if max exit th
   over 1- over recurse 1+ >r
   2dup 1- recurse 1+ r> min >r
   over 1- over 1- recurse -rot 
@@ -184,3 +187,4 @@ stalim allocate throw dup constant staddr clearbuf
         then i j distad !
      loop 
   loop soverlen sduplen distad @ ;
+
