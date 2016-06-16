@@ -2769,11 +2769,11 @@ stalim allocate throw dup constant staddr clearbuf
   zst> 1+ >zst
   set-sort reduce ;
 
-\ ((104,101,106),(100,117),(103,108,97,100,101))
-: seq>strset \ seq -- str
-  snull foreach
-  do set>str s& s|& 
-  loop str> 1- >str ;
+\ {(104,101,106),(100,117),(103,108,97,100,101)}
+: z>s \ seq -- str
+  snull s{& foreach
+  do set>str s& s,& 
+  loop str> 1- >str s}& ;
 
 : snobl \ s -- s'      remove all blanks
   snull snull sbl& srot
@@ -2785,34 +2785,25 @@ stalim allocate throw dup constant staddr clearbuf
      if bl i stopad c! then
   loop snobl ;
 
-\ s hello there|all together|sentence"
-: strset>seq \ string -- seq
-  snull s|& sswap (
+\ s {hello there,all together,sentence}"
+: s>z \ string -- set
+  str> 1 /string 1- >str
+  snull s,& sswap {
   begin sanalyze
   while snip sswap str>seq
-  repeat str>seq ) sdrop ;
-
-: str>z \ string -- set
-  snull snull s{& srot sreplace
-  snull snull s}& srot sreplace
-  snull s|& snull s,& srot sreplace
-  strset>seq ;
-
-: z>str \ set -- string
-  snull s{& 
-  seq>strset
-  snull s,& snull s|& srot sreplace s& s}& ;
+  repeat str>seq } sdrop ;
 
 \ union of stringsets
 : sunion \ s1 s2 -- s3
   s& snull s,& s" }{" >str srot sreplace
-  str>z reduce z>str ;
-\ sswap s|& sswap s& 
-\ strset>seq seq>set seq>strset ;
-false [if]
+  s>z reduce z>s ;
+
 : sintersection \ s1 s2 -- s3
-;
-[then]
+  s>z s>z intersection z>s ;
+
+: sdiff \ s1 s2 -- s3
+  s>z s>z zswap diff z>s ;
+
 : alphabet \ s -- s'
   { sduplen 1+ 1
   do i stopad c@
