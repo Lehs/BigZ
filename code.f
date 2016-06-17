@@ -1536,7 +1536,7 @@ cell 1- log~ constant cellshift
   dup to addr1 false loc{ addr2 flag }
   closep a>addr1
   foreach 
-  do flag if [char] , a>addr1 then zst@ 0<
+  ?do flag if [char] , a>addr1 then zst@ 0<
      if addr1 recurse 2drop
      else zst> n>addr1
      then flag 0= if true to flag then
