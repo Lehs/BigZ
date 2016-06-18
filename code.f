@@ -2770,7 +2770,7 @@ stalim allocate throw dup constant staddr clearbuf
   set-sort reduce ;
 
 \ {(104,101,106),(100,117),(103,108,97,100,101)}
-: z>s \ seq -- str
+: zet>stringset \ seq -- str
   snull s{& foreach
   do set>str s& s,& 
   loop str> 1- >str s}& ;
@@ -2785,8 +2785,8 @@ stalim allocate throw dup constant staddr clearbuf
      if bl i stopad c! then
   loop snobl ;
 
-\ s {hello there,all together,sentence}"
-: s>z \ string -- set
+\ s {Hello there!,How are you?}"
+: stringset>zet \ string -- set
   str> 1 /string 1- >str
   snull s,& sswap {
   begin sanalyze
@@ -2796,13 +2796,13 @@ stalim allocate throw dup constant staddr clearbuf
 \ union of stringsets
 : sunion \ s1 s2 -- s3
   s& snull s,& s" }{" >str srot sreplace
-  s>z reduce z>s ;
+  stringset>zet reduce zet>stringset ;
 
 : sintersection \ s1 s2 -- s3
-  s>z s>z intersection z>s ;
+  stringset>zet stringset>zet intersection zet>stringset ;
 
 : sdiff \ s1 s2 -- s3
-  s>z s>z zswap diff z>s ;
+  stringset>zet stringset>zet zswap diff zet>stringset ;
 
 : alphabet \ s -- s'
   { sduplen 1+ 1
