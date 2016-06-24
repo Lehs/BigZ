@@ -743,6 +743,43 @@ variable flag22
   repeat bdrop bdrop bdrop flag12 @
   if bover |b-| then bswap bmod ;
 
+: digit= \ u -- | n -- f	u=n?
+  len1 cell > if drop bdrop false exit then
+  first @ = bdrop ;
+
+: bfermat2 \ u -- | -- f			fermat prime test
+  btwo bover bone b- brot b**mod
+  1 digit= ;
+
+: bnext_fermat b1or \ u -- v
+  begin bdup bfermat2 0= while b2+ repeat ;
+
+\ rabin-miller strong pseudoprime test
+
+: rs \ u -- s | -- r
+  b1- nextfree first 0 >xs
+  do i @ if i >ys leave then 1 xs+! cell
+  +loop ys> @ bits 0
+  do dup 1 and if i leave then u2/
+  loop nip xs> lbits lshift +
+  dup brshift ;
+
+: pseudo1 \ xsi s m -- | -- f
+  b**mod 1 digit= ;
+
+: pseudo2 \ xsi s m -- | r -- f
+  >bx bx b1- >bx false >ys 0
+  do bover bover i blshift by b**mod
+     bx b=
+     if true ys! leave then
+  loop xdrop xdrop bdrop bdrop ys> ;
+
+: bmiller3 \ u -- | -- f		u odd >3
+  >bx bthree bx rs >zs bover bover
+  bx pseudo1 ?dup
+  if xdrop bdrop bdrop zsdrop exit
+  then bx> zs> pseudo2 ;
+
 base !
 
 : loc{ [compile] { ; immediate
