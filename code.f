@@ -134,7 +134,6 @@ cell log~ 1- constant lcell
 
 : random \ u1 -- u2
   rand um* nip ;
-  
 
 \ big integers based on cell "digits"
 
@@ -385,7 +384,7 @@ vst! 	\ initialize stack för dynamical numbers
   top$ 5 < if @ 0 else 2@ swap then bdrop ;
 
 : v  bl parse vpush ; 		\ 'v 12345' put asc numb on tos
-: b  v v>b ;			\ put bigint on tos 
+: b  v v>b ; immediate		\ put bigint on tos 
 : cl vst! xstack! ;		\ clear stacks
 
 : .v  cr bdepth ?dup		\ print asc numb stack
@@ -715,6 +714,7 @@ false [if]
      then bx bx> b* barmod >bx
   loop bnip xdrop ; 
 
+\ binvmod
 : sign-comp  \ t q t' -- t" | f" f f' -- fnew f'
   b* >r r@ xor 2* +
   case 0 of b~ endof
@@ -742,43 +742,6 @@ variable flag22
      sign-comp flag22 ! flag21 !
   repeat bdrop bdrop bdrop flag12 @
   if bover |b-| then bswap bmod ;
-
-: digit= \ u -- | n -- f	u=n?
-  len1 cell > if drop bdrop false exit then
-  first @ = bdrop ;
-
-: bfermat2 \ u -- | -- f			fermat prime test
-  btwo bover bone b- brot b**mod
-  1 digit= ;
-
-: bnext_fermat b1or \ u -- v
-  begin bdup bfermat2 0= while b2+ repeat ;
-
-\ rabin-miller strong pseudoprime test
-
-: rs \ u -- s | -- r
-  b1- nextfree first 0 >xs
-  do i @ if i >ys leave then 1 xs+! cell
-  +loop ys> @ bits 0
-  do dup 1 and if i leave then u2/
-  loop nip xs> lbits lshift +
-  dup brshift ;
-
-: pseudo1 \ xsi s m -- | -- f
-  b**mod 1 digit= ;
-
-: pseudo2 \ xsi s m -- | r -- f
-  >bx bx b1- >bx false >ys 0
-  do bover bover i blshift by b**mod
-     bx b=
-     if true ys! leave then
-  loop xdrop xdrop bdrop bdrop ys> ;
-
-: bmiller3 \ u -- | -- f		u odd >3
-  >bx bthree bx rs >zs bover bover
-  bx pseudo1 ?dup
-  if xdrop bdrop bdrop zsdrop exit
-  then bx> zs> pseudo2 ;
 
 base !
 
@@ -874,7 +837,7 @@ base !
   r numb 1- r rshift ;
 
 : get-a ( numb -- a )
-  2 - random 2 + ;
+  3 - random  2 + ;
   
 : rabin-miller1 ( numb -- flag )    \ numb odd
   dup dup get-rs rot get-a false loc{ numb r s a flag } 
@@ -1343,12 +1306,12 @@ variable ebuf
 [then]
 
 \ the sieve of Eratosthenes 
-  0xfffff constant plim
-  82025 constant pi_plim
+\ 0xfffff constant plim
+\ 82025 constant pi_plim
 \ 16777215 constant plim      
 \ 1077871 constant pi_plim    
-\ 100000000 constant plim \ 100000000 takes 6 times 
-\ 5761455 constant pi_plim \ longer time to load
+  100000000 constant plim \ 100000000 takes 6 times 
+  5761455 constant pi_plim \ longer time to load
 
 plim bitarray prime_ constant pbuf
 \ prime_ ( n -- flag ) n<plim
@@ -1442,7 +1405,7 @@ breaknumbers cells allocate throw constant breaks
 : stack! ( n ad -- )  @ ! ;
 : stack+! ( n ad -- )  @ +! ;
 
-1 22 lshift cells allocate throw dup constant xst dup ! 
+1 24 lshift cells allocate throw dup constant xst dup ! 
 
 : >xst ( n -- )  xst >stack ;
 : xst> ( -- n )  xst stack> ;
@@ -1454,7 +1417,7 @@ breaknumbers cells allocate throw constant breaks
 : >>xst ( xn ... x1 bc -- )  >r r@ cs 0 ?do >xst loop r> >xst ;
 : xst>> ( -- x1 ... xn bc )  xst@ >r xst> cs 0 ?do xst> loop r> ;
 
-1 22 lshift cells allocate throw dup constant yst dup ! 
+1 24 lshift cells allocate throw dup constant yst dup ! 
 
 : >yst ( n -- )  yst >stack ;
 : yst> ( -- n )  yst stack> ;
@@ -1472,7 +1435,7 @@ cell 1- log~ constant cellshift
 : stack-cl ( ad -- )  dup ! ;
 : stack-empty ( ad -- flag )  dup @ = ;
 
-1 22 lshift cells allocate throw dup constant zst dup ! 
+1 24 lshift cells allocate throw dup constant zst dup ! 
 
 : >zst ( n -- )  zst >stack ;
 : zst> ( -- n )  zst stack> ;
@@ -1642,7 +1605,7 @@ cell 1- log~ constant cellshift
 : yfence yst _fence ;
 : zfence zst _fence ;
   
-: set-sort \ -- | s -- n1...nk -2k
+: set-sort2 \ -- | s -- n1...nk -2k
   0 loc{ counter } 0 >xst 0 >yst
   foreach
   ?do zst@ ?obj
@@ -1652,6 +1615,35 @@ cell 1- log~ constant cellshift
      endcase
   loop counter sort 2* negate >zet
   xst zst setmove zetmerge
+  yst zst setmove zetmerge ;
+  
+: adswap \ ad1 ad2 -- 
+  over @ over @ swap rot ! swap ! ;
+
+: singlepart \ ad1 ad2 -- ad
+  tuck 2dup @ locals| p ad | swap                \ ad2 ad2 ad1
+  do i @ p <                                     \ ad2 flag
+     if ad i adswap ad cell + to ad then cell    \ ad2 cell
+  +loop ad adswap ad ;                           \ ad
+
+: qsort \ ad1 ad2 --
+  2dup < 
+  if 2dup singlepart >r
+     swap r@ cell - recurse
+     r> cell + swap recurse 
+  else 2drop 
+  then ;
+
+: set-sort \ -- | s -- n1...nk -2k
+  xst @ cell+ 0 locals| counter ad1 | 0 >yst
+  foreach
+  ?do zst@ ?obj
+     case 0 of counter 1+ to counter zst> >xst endof
+          1 of zfence yst zst setmove zetmerge zst yst setmove endof
+          2 of zfence yst zst setmove zetmerge zst yst setmove endof
+     endcase
+  loop ad1 dup counter 1- cells + qsort counter 2* negate >xst
+  xst zst setmove 
   yst zst setmove zetmerge ;
 
 : next-element-ad \ ad1 -- ad2
@@ -1884,7 +1876,7 @@ true value sort?
 : } \ x1...xk -- 
   depth xst> - 2* negate
   -1 match +! >zet sort?
-  if set-sort then reduce match @
+  if set-sort2 then reduce match @
   if zet> then true to sort? ; 
 
 : q  xst stack-cl yst stack-cl zst stack-cl 0 match ! abort ;
@@ -1898,12 +1890,13 @@ true value sort?
 \ cond ( n -- flag )
 : all dup = ;
 : odd 1 and ; 
+: even 1 xor ;
 : 1mod4 4 mod 1 = ; 
 : 3mod4 4 mod 3 = ; 
 : sqr dup sqrtf dup * = ;
 : sqrfree dup radical = ;
-: pairprime dup prime over 2 + prime rot 2 - prime or and ;  
-: notpairprime dup prime swap pairprime 0= and ;
+: twinprime dup prime over 2 + prime rot 2 - prime or and ;  
+: ntprime dup prime swap twinprime 0= and ;
 : semiprime bigomega 2 = ;
 : uniprime smallomega 1 = ;
 : biprime smallomega 2 = ;
@@ -2597,289 +2590,66 @@ false [if]
 : coprime ugcd 1 = ;
 : divide swap mod 0= ; 
 
-\ String stack
+: factorset \ n -- set
+  pollard# loc{ n }
+  n 0 do >zst loop
+  n 2* negate >zst 
+  set-sort 
+  zst> 1- >zst ;
 
-: clearbuf \ ad --
-  dup cell+ swap ! ;
+: set-of-factors \ s -- s'
+  0 >xst
+  foreach
+  do zst> factorset zfence xzmerge loop
+  xst zst setmove ;
 
-variable stp
+\ rabin-miller strong pseudoprime test
 
-0x4000 constant stlim
-stlim allocate throw dup constant stbuf clearbuf
-\ ascii buffer, at stbuf is loaded address to first free byte
+: rs \ u -- s | -- r
+  b1- nextfree first 0 >xs
+  do i @ if i >ys leave then 1 xs+! cell
+  +loop ys> @ bits 0
+  do dup 1 and if i leave then u2/
+  loop nip xs> lbits lshift +
+  dup brshift ;
 
-0x1000 constant stalim
-stalim allocate throw dup constant staddr clearbuf
-\ address buffer, at staddr is loaded address to first free cell
+: digit= \ u -- | n -- f	u=n?
+  len1 cell > if drop bdrop false exit then
+  first @ = bdrop ;
 
-: >str \ ad n --    put string on stack
-  tuck             \ n ad n
-  stbuf @ dup      \ n ad n a a
-  staddr @ !       \ n ad n a
-  cell staddr +!
-  swap move        \ n
-  stbuf +! 
-  1 stp +! ;
+: pseudo1 \ xsi s m -- | -- f
+  b**mod 1 digit= ;
 
-: str@ \ -- ad n
-  stp @ cells staddr + @ 
-  dup stbuf @ swap - ;
+: pseudo2 \ xsi s m -- | r -- f
+  >bx bx b1- >bx false >ys 0
+  do bover bover i blshift by b**mod
+     bx b=
+     if true ys! leave then
+  loop xdrop xdrop bdrop bdrop ys> ;
 
-: str> \ -- ad n
-  str@ over stbuf !
-  cell negate staddr +!
-  -1 stp +! ;
+: bmiller \ u -- u | -- f		u odd >3
+  >bx bx btwo bx rs >zs bover bover
+  bx pseudo1 ?dup
+  if xdrop bdrop bdrop zsdrop exit
+  then bx> zs> pseudo2 ;
+\ u is of the form u=1+s*2^r, where s is odd
+\ given any number 1 < xsi < u
+\ if xsi^s=1[mod u] or
+\ if it exist j: 0 =< j < r with
+\ xsi^[s*2^j]=-1[mod u]
+\ then u is pseudoprime.
 
-: sempty \ -- flag
-  stp @ 0= ;
-
-\ addr to the ith string from the bottom of the stack 
-: ist@ \ i -- ad n     i=1,...
-  dup stp @ = 
-  if cells staddr + @ dup stbuf
-  else cells staddr + dup @ dup rot cell+ 
-  then @ swap - ;
-
-\ addr to the kth string from the top of the stack
-: spickad \ k -- ad n
-  stp @ swap - ist@ ;
-
-\ print string stack
-: .str stp @ 0 ?do cr i spickad type loop ;
-
-: str. str> type ;
-
-\ enter string from commando line
-: s [char] " parse >str ;
-\ use s" example" >str in definitions
-
-: sdup stp @ ist@ >str ;
-: sdrop str> 2drop ;
-: sover stp @ 1- ist@ >str ;
-: soover stp @ 2 - ist@ >str ;
-: snip str> sdrop >str ;
-: sswap sover str> str> sdrop >str >str ;
-: srot soover str> str> str> sdrop >str >str >str ;
-: stuck sswap sover ;
-: spick spickad >str ;
-
-: s& \ s1 s2 -- s1&s2
-  -1 stp +! 
-  staddr @ @
-  cell negate staddr +!
-  staddr @ ! ;
-
-: clearstrstack \ -- 
-  begin sempty 0=
-  while sdrop
-  repeat ;
-
-\ lenghth of top string 
-: sduplen \ s -- s | -- n
-  str@ nip ;
-
-\ length of second string
-: soverlen \ s1 s2 -- s1 s2 | -- n
-  1 spickad nip ;
-
-\ the n leftmost chars in string
-: sleft \ s -- s' | n --  
-  str> drop swap >str ;
-
-\ the n rightmost chars in string
-: sright \ s -- s' | n -- 
-  str> rot over swap - /string >str ;
-
-\ split the string after the nth letter
-: ssplit \ s -- s' s" | n --
-  sdup dup sleft sswap
-  sduplen swap - sright ;
-
-\ the address to the jth letter in top string
-: stopad \ s1 s2 -- s1 s2 | j -- adj    (in s2) j>0
-  str@ drop 1- + ;
-
-\ the address to the ith letter in second string
-: ssecad \ s1 s2 -- s1 s2 | i -- adi
-  1 spickad drop 1- + ;
-
-\ split s2 if s1 is a part of s2 (true flag)
-\ true -> s2=s3&s1&s4
-: sanalyze \ s1 s2 -- s1 s3 s1 s4 / s2 | -- flag 
-  soverlen                   \ m
-  str@ 1 spickad search      \ m ad n f
-  if nip sduplen swap -      \ m k-n
-     ssplit                  \ m 
-     ssplit true    
-  else 2drop drop false 
+: bprime \ b -- flag
+  len1 cell >
+  if bmiller bdrop
+  else b>s prime
   then ;
 
-\ check if s1 is in s2
-: substring \ s1 s2 -- s1 s2 | -- flag
-  str@ 1 spickad search nip nip ;
-
-\ replace s2 with s1 wherever in s3
-: sreplace \ s1 s2 s3 -- s4
-  begin sanalyze
-  while snip 3 spick sswap s& s&
-  repeat snip snip ;
-
-\ string comparison 
-: scomp \ s1 s2 -- | -- n    -1:s1>s2, +1:s1<s2, 0:s1=s2
-  str> str> 2swap compare ;
-
-\ put an empty string on the stack
-: snull pad 0 >str ; 
-
-\ conc. signs to top string on stack
-: schr& \ s -- s' | ch --
-  >r str> 2dup + r> swap c! 1+ >str ;
-
-: sbl& bl schr& ;
-: s,& [char] , schr& ;
-: s.& [char] . schr& ;
-: s;& [char] ; schr& ;
-: s:& [char] : schr& ;
-: s?& [char] ? schr& ;
-: s!& [char] ! schr& ;
-: s-& [char] - schr& ;
-: s|& [char] | schr& ;
-: s{& [char] { schr& ;
-: s}& [char] } schr& ;
-
-\ same length?
-: slen= \ s1 s2 -- | -- flag
-  str> nip str> nip = ;
-
-\ remove ending spaces
-: strail \ s -- s'  
-  str@ -trailing ;
-
-: >capital \ ch -- ch'
-  [char] _ and ;
-
-: >common \ ch -- ch'
-  [char] ` or ;
- 
-: capital \ ch --flag
-  [char] A [char] Z 1+ within ;
-
-: common \ ch -- flag
-  [char] a [char] z 1+ within ;
-
-\ lower letters, eng.
-: slower \ s -- s'
-  str@ over + swap
-  do i c@ capital
-     if i c@ >common i c! then
-  loop ;
-
-\ upper letters, eng.
-: supper \ s -- s'
-  str@ over + swap
-  do i c@ common
-     if i c@ >capital i c! then
-  loop ;
-
-\ Unsigned double from string
-: str>ud \ s -- s' | -- ud flag
-  0. str@ dup >r >number dup >r >str snip 2r> > ;
-
-\ Double from string
-: str>d \ s -- s' | -- d flag
-  1 stopad c@ [char] - = dup
-  if sduplen 1- sright
-  then str>ud >r rot if dnegate then r> ;
-
-\ Create string of set or ordered sequence
-: set>str \ set -- string   
-  snull foreach over >r
-  do zst> loop r> 0
-  do schr& loop ;
-
-: str>seq \ string -- sequence
-  ( sduplen 1+ 1
-  do i stopad c@
-  loop ) sdrop ;
-
-: seq>set \ seq -- set
-  zst> 1+ >zst
-  set-sort reduce ;
-
-\ {(104,101,106),(100,117),(103,108,97,100,101)}
-: zet>stringset \ seq -- str
-  snull s{& foreach
-  do set>str s& s,& 
-  loop str> 1- >str s}& ;
-
-: snobl \ s -- s'      remove all blanks
-  snull snull sbl& srot
-  sreplace ;
-
-: sjustabc \ s -- s'   remove all signs but eng. letters
-  sduplen 1+ 1
-  do i stopad c@ dup common swap capital or 0=
-     if bl i stopad c! then
-  loop snobl ;
-
-\ s {Hello there!,How are you?}"
-: stringset>zet \ string -- set
-  str> 1 /string 1- >str
-  snull s,& sswap {
-  begin sanalyze
-  while snip sswap str>seq
-  repeat str>seq } sdrop ;
-
-\ union of stringsets
-: sunion \ s1 s2 -- s3
-  s& snull s,& s" }{" >str srot sreplace
-  stringset>zet reduce zet>stringset ;
-
-: sintersection \ s1 s2 -- s3
-  stringset>zet stringset>zet intersection zet>stringset ;
-
-: sdiff \ s1 s2 -- s3
-  stringset>zet stringset>zet zswap diff zet>stringset ;
-
-: alphabet \ s -- s'
-  { sduplen 1+ 1
-  do i stopad c@
-  loop } sdrop set>str ;
-
-\ bioinformatics --------------
-
-\ Hamming distance
-: hamming \ s1 s2 -- s1 s2 | -- n 
-  0 1 spickad drop str@ 0  
-  do over i + c@ 
-     over i + c@ = 0=
-     if rot 1+ -rot then
-  loop 2drop ;
-
-\ Wagner-Fischer algorithm
-
-: distad \ s1 s2 -- s1 s2 | i j -- addr
-  soverlen 1+ * + cells pad + ;
-
-: distinit \ s1 s2 -- s1 s2 
-  soverlen 1+ 0 do i i 0 distad ! loop
-  sduplen 1+ 0 do i 0 i distad ! loop ;
-
-\ Levenshtein distance
-: editdistance \ s1 s2 -- s1 s2 | -- lev   
-  distinit sduplen 1+ 1
-  do soverlen 1+ 1
-     do i ssecad c@ j stopad c@ =
-        if i 1- j 1- distad @ 
-        else i 1- j distad @ 1+              \ a deletion
-             i j 1- distad @ 1+              \ an insertion
-             i 1- j 1- distad @ 1+           \ a substitution
-             min min 
-        then i j distad !
-     loop 
-  loop soverlen sduplen distad @ ;
-
-\ -------------------------
+: bnextprime \ b -- p 
+  b1or 
+  begin bdup bprime 0=
+  while b2+
+  repeat ;
 
 ?undef sp0 [if]
 s0 constant sp0
