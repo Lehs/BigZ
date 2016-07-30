@@ -1890,7 +1890,7 @@ true value sort?
 \ cond ( n -- flag )
 : all dup = ;
 : odd 1 and ; 
-: even 1 xor ;
+: even odd 0= ;
 : 1mod4 4 mod 1 = ; 
 : 3mod4 4 mod 3 = ; 
 : sqr dup sqrtf dup * = ;
