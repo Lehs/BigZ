@@ -1308,10 +1308,10 @@ variable ebuf
 \ the sieve of Eratosthenes 
 \ 0xfffff constant plim
 \ 82025 constant pi_plim
-\ 16777215 constant plim      
-\ 1077871 constant pi_plim    
-  100000000 constant plim \ 100000000 takes 6 times 
-  5761455 constant pi_plim \ longer time to load
+  16777215 constant plim      
+  1077871 constant pi_plim    
+\ 100000000 constant plim \ 100000000 takes 6 times 
+\ 5761455 constant pi_plim \ longer time to load
 
 plim bitarray prime_ constant pbuf
 \ prime_ ( n -- flag ) n<plim
