@@ -5,7 +5,7 @@
 \ lehs@hotmail.se 
 
 : ?undef ( -- flag ) bl word find nip 0= ; 
-\ flag is true if word undefined
+\ flag is true if word undefined 
 
 base @ hex
 
@@ -134,6 +134,7 @@ cell log~ 1- constant lcell
 
 : random \ u1 -- u2
   rand um* nip ;
+  
 
 \ big integers based on cell "digits"
 
@@ -384,7 +385,7 @@ vst! 	\ initialize stack för dynamical numbers
   top$ 5 < if @ 0 else 2@ swap then bdrop ;
 
 : v  bl parse vpush ; 		\ 'v 12345' put asc numb on tos
-: b  v v>b ; immediate		\ put bigint on tos 
+: b  v v>b ;	       		\ put bigint on tos 
 : cl vst! xstack! ;		\ clear stacks
 
 : .v  cr bdepth ?dup		\ print asc numb stack
@@ -487,7 +488,7 @@ variable borrow
      borrow @ 0 d-
      i xs@ + @ 0 d-
      abs borrow ! i ys@ + ! cell
-  +loop 0 >zs drop-all bdrop <top zs> ;
+  +loop 0 >zs bdrop drop-all <top zs> ;
 
 : b- \ u v -- u-v
   b~ if cr ." negative big!" cr 10 throw then ; 
@@ -714,7 +715,6 @@ false [if]
      then bx bx> b* barmod >bx
   loop bnip xdrop ; 
 
-\ binvmod
 : sign-comp  \ t q t' -- t" | f" f f' -- fnew f'
   b* >r r@ xor 2* +
   case 0 of b~ endof
@@ -837,14 +837,14 @@ base !
   r numb 1- r rshift ;
 
 : get-a ( numb -- a )
-  3 - random  2 + ;
+  2 - random 2 + ;
   
 : rabin-miller1 ( numb -- flag )    \ numb odd
-  dup dup get-rs rot get-a false loc{ numb r s a flag } 
-  a s numb u**mod 1 = 
+  dup get-rs false loc{ numb r s flag } 
+  2 s numb u**mod 1 = 
   if true exit
   then r 0 
-  ?do a s i lshift numb u**mod numb 1- = 
+  ?do 2 s i lshift numb u**mod numb 1- = 
      if true to flag leave then
   loop flag ;
 
@@ -1249,7 +1249,7 @@ cell 4 =
 : gfac ( a b -- p1 q1 ... pk qk )
   2dup gpollard2 2over 2over gnorm -rot gnorm =
   if 2drop exit
-  then 2dup 2>r g/ recurse 2r> recurse ;
+'  then 2dup 2>r g/ recurse 2r> recurse ;
 
 \ Prime functions
 
@@ -1306,10 +1306,10 @@ variable ebuf
 [then]
 
 \ the sieve of Eratosthenes 
-\ 0xfffff constant plim
-\ 82025 constant pi_plim
-  16777215 constant plim      
-  1077871 constant pi_plim    
+  0xfffff constant plim
+  82025 constant pi_plim
+\ 16777215 constant plim      
+\ 1077871 constant pi_plim    
 \ 100000000 constant plim \ 100000000 takes 6 times 
 \ 5761455 constant pi_plim \ longer time to load
 
@@ -1405,7 +1405,7 @@ breaknumbers cells allocate throw constant breaks
 : stack! ( n ad -- )  @ ! ;
 : stack+! ( n ad -- )  @ +! ;
 
-1 24 lshift cells allocate throw dup constant xst dup ! 
+1 23 lshift cells allocate throw dup constant xst dup ! 
 
 : >xst ( n -- )  xst >stack ;
 : xst> ( -- n )  xst stack> ;
@@ -1417,7 +1417,7 @@ breaknumbers cells allocate throw constant breaks
 : >>xst ( xn ... x1 bc -- )  >r r@ cs 0 ?do >xst loop r> >xst ;
 : xst>> ( -- x1 ... xn bc )  xst@ >r xst> cs 0 ?do xst> loop r> ;
 
-1 24 lshift cells allocate throw dup constant yst dup ! 
+1 23 lshift cells allocate throw dup constant yst dup ! 
 
 : >yst ( n -- )  yst >stack ;
 : yst> ( -- n )  yst stack> ;
@@ -1435,7 +1435,7 @@ cell 1- log~ constant cellshift
 : stack-cl ( ad -- )  dup ! ;
 : stack-empty ( ad -- flag )  dup @ = ;
 
-1 24 lshift cells allocate throw dup constant zst dup ! 
+1 23 lshift cells allocate throw dup constant zst dup ! 
 
 : >zst ( n -- )  zst >stack ;
 : zst> ( -- n )  zst stack> ;
@@ -1604,7 +1604,7 @@ cell 1- log~ constant cellshift
 : xfence xst _fence ;
 : yfence yst _fence ;
 : zfence zst _fence ;
-  
+
 : set-sort2 \ -- | s -- n1...nk -2k
   0 loc{ counter } 0 >xst 0 >yst
   foreach
@@ -1616,15 +1616,15 @@ cell 1- log~ constant cellshift
   loop counter sort 2* negate >zet
   xst zst setmove zetmerge
   yst zst setmove zetmerge ;
-  
+
 : adswap \ ad1 ad2 -- 
-  over @ over @ swap rot ! swap ! ;
+  over @ over @ swap rot ! swap ! ; 
 
 : singlepart \ ad1 ad2 -- ad
   tuck 2dup @ locals| p ad | swap                \ ad2 ad2 ad1
   do i @ p <                                     \ ad2 flag
      if ad i adswap ad cell + to ad then cell    \ ad2 cell
-  +loop ad adswap ad ;                           \ ad
+  +loop ad adswap ad ;                           \ ad 
 
 : qsort \ ad1 ad2 --
   2dup < 
@@ -1890,7 +1890,7 @@ true value sort?
 \ cond ( n -- flag )
 : all dup = ;
 : odd 1 and ; 
-: even odd 0= ;
+: even 1 xor ;
 : 1mod4 4 mod 1 = ; 
 : 3mod4 4 mod 3 = ; 
 : sqr dup sqrtf dup * = ;
@@ -2536,32 +2536,32 @@ false [if]
 : intcond \ low hi xt -- | -- s   "intervall condition"
   loc{ xt } 
   swap 0 -rot
-  do i xt execute 
+  ?do i xt execute 
      if i >zst 1+ then
   loop 2* negate >zst ;
 
 : setcond \ xt -- | s -- s'       "set condition"
   loc{ xt } 0
   foreach
-  do zst> dup xt execute
+  ?do zst> dup xt execute
      if >xst 1+ else drop then
   loop dup 0
-  do xst> >zst 
+  ?do xst> >zst 
   loop 2* negate >zst ;
 
 : intimage \ low hi xt -- | -- s  "intervall image"
   loc{ xt } 
   swap 2dup
-  do i xt execute >zst
+  ?do i xt execute >zst
   loop - 2* negate >zst
   set-sort reduce ;
 
 : setimage \ xt -- | s -- s'      "set image"
   loc{ xt } 0
   foreach 
-  do zst> xt execute >xst 1+
+  ?do zst> xt execute >xst 1+
   loop dup 0
-  do xst> >zst
+  ?do xst> >zst
   loop 2* negate >zst
   set-sort reduce ;
 
@@ -2573,7 +2573,7 @@ false [if]
 : paircond \ xt -- | s -- s'
   loc{ xt } 0
   foreach
-  do zdup zet> drop xt execute
+  ?do zdup zet> drop xt execute
      if zst xst setmove 1+ else zdrop then
   loop 6 * negate >xst
   xst zst setmove ;
@@ -2581,9 +2581,9 @@ false [if]
 : pairimage \ xt -- | s -- s'
   loc{ xt } 0
   foreach
-  do 1+ zet> drop xt execute >xst
+  ?do 1+ zet> drop xt execute >xst
   loop dup 0 
-  do xst> >zst
+  ?do xst> >zst
   loop 2* negate >zst
   set-sort reduce ;
 
@@ -2650,6 +2650,73 @@ false [if]
   begin bdup bprime 0=
   while b2+
   repeat ;
+
+: int2cond \ low hi n xt -- | -- s   "intervall two-condition"
+  locals| xt n | 
+  swap 0 -rot
+  ?do i n xt execute 
+     if i >zst 1+ then
+  loop 2* negate >zst ;
+
+: int2image \ low hi n xt -- | -- s  "intervall image"
+  locals| xt n | 
+  swap 2dup
+  ?do i n xt execute >zst
+  loop - 2* negate >zst
+  set-sort reduce ;
+
+: set2cond \ n xt -- | s -- s'       "set condition"
+  locals| xt n | 0
+  foreach
+  ?do zst> dup n xt execute
+     if >xst 1+ else drop then
+  loop dup 0
+  ?do xst> >zst 
+  loop 2* negate >zst ;
+
+: set2image \ n xt -- | s -- s'      "set image"
+  locals| xt n | 0
+  foreach 
+  ?do zst> n xt execute >xst 1+
+  loop dup 0
+  ?do xst> >zst
+  loop 2* negate >zst
+  set-sort reduce ;
+
+variable zp
+variable cf2
+
+: condition  ' 0 cf2 ! sp@ zp ! ;
+: function  ' 2 cf2 ! sp@ zp ! ;
+: 2dim  ' -1 cf2 ! sp@ zp ! ;
+: syntax  sp@ zp @ - 0= if 0 0 else 1 then cf2 @ ;
+: non all ;
+
+\ e.g. 1 20 condition < 7 create-set
+: create-set \ m n xt nr -- set
+  syntax locals| cf k nr xt n m |
+  k cf or
+  case 0 of m n xt intcond endof
+       1 of m n nr xt int2cond endof
+       2 of m n xt intimage endof
+       3 of m n nr xt int2image endof
+  endcase ;
+
+\ e.g. condition > 5 filter-set
+: filter-set \ set xt nr -- set'
+  syntax locals| cf k nr xt |
+  cf 0< if xt paircond exit then k
+  case 0 of xt setcond endof
+       1 of nr xt set2cond endof
+  endcase ;
+
+\ e.g. 2dim + transform-set
+: transform-set \ set xt nr -- set'
+  syntax locals| cf k nr xt |
+  cf 0< if xt pairimage exit then k
+  case 0 of xt setimage endof
+       1 of nr xt set2image endof
+  endcase ;
 
 ?undef sp0 [if]
 s0 constant sp0
