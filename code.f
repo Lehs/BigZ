@@ -1626,8 +1626,18 @@ cell 1- log~ constant cellshift
   do i @ p <                                     \ ad2 flag
      if ad i adswap ad cell + to ad then cell    \ ad2 cell
   +loop ad adswap ad ;                           \ ad 
+  
+: qsort \ ad1 ad2 --      pointing on first and last cell in array
+  begin
+    2dup < 0= if 2drop exit then
+    2dup - negate 1 rshift >r \ keep radius (half of the distance)
+    2dup singlepart 2dup - >r >r \ ( R: radius distance2 ad )
+    r@ cell - swap r> cell+ swap \ ( d-subarray1 d-subarray2 )
+    2r> u< if 2swap then recurse \ take smallest subarray first
+  again \ tail call optimization by hand
+;
 
-: qsort \ ad1 ad2 --
+: qsort~ \ ad1 ad2 --
   2dup < 
   if 2dup singlepart >r
      swap r@ cell - recurse
