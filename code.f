@@ -2730,7 +2730,7 @@ variable cf2
        1 of nr xt set2image endof
   endcase ;
 
-: zgaps \ s -- s'
+: gapz \ s -- s'
   0 locals| n | 
   foreach 1+
   do zst> zst@ - >xst 
