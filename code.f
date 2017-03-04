@@ -604,7 +604,7 @@ variable borrow
   do bitsblshift i @ cell*x b+ -cell +loop
   bnip xdrop <top ;
 
-: brandom \ -- u | n --   n is the maximal number of decimal digits in u
+: brandom \ -- u | n --  the maximal number of decimal digits in u
   bzero 0 do bten b* 10 random s>b b+ loop ;
 
 \ 2^sxn+1=2*2^sxn-[2^sxn]^2*n/2^[2s] 
@@ -701,8 +701,8 @@ false [if]
 : b**mod~ \ u v m -- u^v mod m
   >bx blog~ bswap >bx bone 0	  		\ v 1 | x: m u | l[v] 0
   do i bits/mod cells second + @		\ v w | x: m u | r celli
-     1 rot lshift and				       \ v w | x: m u | celli & 2^r
-     if bx b* by bmod				       \ v [w*u]
+     1 rot lshift and				\ v w | x: m u | celli & 2^r
+     if bx b* by bmod				\ v [w*u]
      then bx bx> b* bx bmod >bx 		\ v [w*u] x<-[x*x]
   loop bnip xdrop xdrop ; 
 
@@ -1307,10 +1307,10 @@ variable ebuf
 [then]
 
 \ the sieve of Eratosthenes 
-  0xfffff constant plim
-  82025 constant pi_plim
-\ 16777215 constant plim      
-\ 1077871 constant pi_plim    
+\ 0xfffff constant plim
+\ 82025 constant pi_plim
+  16777215 constant plim      
+  1077871 constant pi_plim    
 \ 100000000 constant plim \ 100000000 takes 6 times 
 \ 5761455 constant pi_plim \ longer time to load
 
@@ -1436,7 +1436,7 @@ cell 1- log~ constant cellshift
 : stack-cl ( ad -- )  dup ! ;
 : stack-empty ( ad -- flag )  dup @ = ;
 
-1 23 lshift cells allocate throw dup constant zst dup ! 
+1 24 lshift cells allocate throw dup constant zst dup ! 
 
 : >zst ( n -- )  zst >stack ;
 : zst> ( -- n )  zst stack> ;
@@ -1626,7 +1626,7 @@ cell 1- log~ constant cellshift
   do i @ p <                                     \ ad2 flag
      if ad i adswap ad cell + to ad then cell    \ ad2 cell
   +loop ad adswap ad ;                           \ ad 
-  
+
 : qsort \ ad1 ad2 --      pointing on first and last cell in array
   begin
     2dup < 0= if 2drop exit then
@@ -1637,15 +1637,15 @@ cell 1- log~ constant cellshift
   again \ tail call optimization by hand
 ;
 
-: qsort~ \ ad1 ad2 --
+: qsort~ \ ad1 ad2 --      pointing on first and last cell
   2dup < 
   if 2dup singlepart >r
      swap r@ cell - recurse
      r> cell + swap recurse 
   else 2drop 
-  then ;
+  then ; \ problem with sorting sorted big set
 
-: set-sort \ -- | s -- n1...nk -2k
+: set-sort \ -- | s -- n1...nk -2k ???
   xst @ cell+ 0 locals| counter ad1 | 0 >yst
   foreach
   ?do zst@ ?obj
@@ -1907,9 +1907,9 @@ true value sort?
 : sqr dup sqrtf dup * = ;
 : sqrfree dup radical = ;
 : twinprime dup prime over 2 + prime rot 2 - prime or and ;  
-: ntprime dup prime swap twinprime 0= and ;
+: ntwinprime dup prime swap twinprime 0= and ;
 : semiprime bigomega 2 = ;
-: uniprime smallomega 1 = ;
+: primepower smallomega 1 = ;
 : biprime smallomega 2 = ;
 
 : 2sqrsum dup 0 
@@ -2565,7 +2565,8 @@ false [if]
   swap 2dup
   ?do i xt execute >zst
   loop - 2* negate >zst
-  set-sort reduce ;
+  set-sort reduce 
+;
 
 : setimage \ xt -- | s -- s'      "set image"
   loc{ xt } 0
@@ -2729,6 +2730,39 @@ variable cf2
        1 of nr xt set2image endof
   endcase ;
 
+: zgaps \ s -- s'
+  0 locals| n | 
+  foreach 1+
+  do zst> zst@ - >xst 
+     n 1+ to n
+  loop zst> drop
+  n 2* negate >xst
+  xst zst setmove 
+  set-sort reduce ;
+
+: hist \ a1 ... ak k -- a1 ... ai i ak nk 
+  2dup 0 locals| n k1 a k |
+  begin dup a = k1 and
+  while n 1+ to n 
+     k1 1- to k1 drop
+  repeat k n - a n ;
+
+\ testing for small (fast) single number divisors
+\ of big number w in the intervall n,m-1
+: sfac \ w -- w ?v | m n -- f 
+  beven if 2drop 2 bdup b2/ exit then
+  0 locals| flag | 
+  do bdup i pnr@ bs/mod 0= 
+     if i pnr@ to flag leave then bdrop
+  loop flag ;
+
+: sfacset \ b -- set
+  0                           \ count of the number of elements
+  begin pi_plim 1 sfac ?dup 
+  while >zst 2 - bnip
+  repeat bdrop >zst reduce ;
+
+
 \ String stack
 
 : clearbuf \ ad --
@@ -2743,6 +2777,8 @@ stlim allocate throw dup constant stbuf clearbuf
 0x1000 constant stalim
 stalim allocate throw dup constant staddr clearbuf
 \ address buffer, at staddr is loaded address to first free cell
+
+: clstr  0 stp ! stbuf clearbuf staddr clearbuf ;
 
 : >str \ ad n --    put string on stack
   tuck             \ n ad n
@@ -3023,4 +3059,3 @@ r0 constant rp0
 
 100000 cells new-data-stack
 100001 cells allocate throw 100000 cells + align rp0 ! q
-
