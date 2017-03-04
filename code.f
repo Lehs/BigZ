@@ -2740,6 +2740,11 @@ variable cf2
   xst zst setmove 
   set-sort reduce ;
 
+: nextprimepower \ n -- m
+  begin dup primepower 0=
+  while 1+
+  repeat ;
+  
 : hist \ a1 ... ak k -- a1 ... ai i ak nk 
   2dup 0 locals| n k1 a k |
   begin dup a = k1 and
