@@ -1,3 +1,4 @@
+
 \ unsigned natural numbers of dynamical length in 32+ bit ANS Forth
 \ 2015 ver 2.1
 \ started by Lars-Erik Svahn, Sweden
@@ -1060,7 +1061,7 @@ cell 4 =
 : m** ( b e -- d )
   dup 0= if 2drop 1. exit then
   1 swap 1. rot 0
-  do 2over m*/ loop 2nip ;
+  do 2over m*/ loop 2swap 2drop ;
 
 : -1** ( n -- i )
   1 and if -1 else 1 then ;
@@ -1382,7 +1383,7 @@ breaknumbers cells allocate throw constant breaks
   >r 2dup + 2/ dup pnr@ r> u> \ i j k flag 
   if -rot nip else nip then ; 
 
-: fpi pi ;
+?undef pi 0= [if] : fpi pi ; [then]
 
 : pi ( x -- n ) >r pi_plim 1+ 0  \ x<16777215
   begin r@ newintpnr 2dup - 2 u< \ i j flag 
@@ -2577,10 +2578,10 @@ false [if]
   loop 2* negate >zst
   set-sort reduce ;
 
-: square dup * ;                \ x → x²
-: sqr>prime square nextprime ;  \ x → nextprime(x²)
-: sqr<prime square prevprime ;  \ x → prevprime(x²)
-: foo dup totients mod ;        \ x → x(mod ?(x)) Euler's totient.
+: square dup * ;                \ x ? x²
+: sqr>prime square nextprime ;  \ x ? nextprime(x²)
+: sqr<prime square prevprime ;  \ x ? prevprime(x²)
+: foo dup totients mod ;        \ x ? x(mod ?(x)) Euler's totient.
 
 : paircond \ xt -- | s -- s'
   loc{ xt } 0
@@ -2730,7 +2731,6 @@ variable cf2
        1 of nr xt set2image endof
   endcase ;
 
-\ the set of gaps
 : gapz \ s -- s'
   0 locals| n | 
   foreach 1+
