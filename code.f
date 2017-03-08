@@ -30,7 +30,7 @@ base @ hex
 : sqrtf \ m -- n       floor
   0 d>f fsqrt f>s ;
 
-: sqrtc \ m -- n	ceiling
+: sqrtc \ m -- n  ceiling
   1- sqrtf 1+ ;
 
 0400 constant 1k
@@ -158,62 +158,62 @@ variable xp
 02000 dup allocate throw constant pad1 
 pad1 + cell - constant pad2
 
-: rez \ a n -- a' n'	delete leading zero ascii 48
+: rez \ a n -- a' n'  delete leading zero ascii 48
   dup 1 =
   if exit
   then over c@ 030 =
   if 1- swap 1+ swap recurse
   then ;
 
-: asc>  0F and ;		\ ascii number to binary number
-: >asc  030 or ;		\ reverse
+: asc>  0F and ;    \ ascii number to binary number
+: >asc  030 or ;    \ reverse
 : vst!  b0 cell - bvp ! v$0 bvp @ ! ;
 
-vst! 	\ initialize stack för dynamical numbers
+vst!   \ initialize stack för dynamical numbers
 
 : nextfree ( -- a )  bvp @ @ ;
-: first ( -- a )  bvp @ cell + @ ;	\ big on tos
-: second ( -- a )  bvp @ 2 cells + @ ;	\ big on second
-: third ( -- a )  bvp @ 3 cells + @ ;	\ big on third
-: vp+ ( -- )  -cell bvp +! ;		\ stack pointer
+: first ( -- a )  bvp @ cell + @ ;  \ big on tos
+: second ( -- a )  bvp @ 2 cells + @ ;  \ big on second
+: third ( -- a )  bvp @ 3 cells + @ ;  \ big on third
+: vp+ ( -- )  -cell bvp +! ;    \ stack pointer
 
-: tov \ ad --		ad of number array to stack
+: tov \ ad --    ad of number array to stack
   vp+ bvp @ ! ;
 
 : bempty ( -- f )  nextfree v$0 = ;
-: len1 ( -- n )  nextfree first - ;	\ get length to first
+: len1 ( -- n )  nextfree first - ;  \ get length to first
 : len2 ( -- n )  first second - ;
 : len3 ( -- n )  second third - ;
 : top$ ( -- a n )  first len1 ;
 : sec$ ( -- a n )  second len2 ;
 : thi$ ( -- a n )  third len3 ;
 
-: vdigit \ n --		put single "digit" on stack
+: vdigit \ n --    put single "digit" on stack
   nextfree tuck ! cell+ tov ;
 
 : bsconstant \ n -- 
   create , does> @ vdigit ;
   
-: dvdigit \ ud -- 	put double "digit" number on stack
+: dvdigit \ ud --   put double "digit" number on stack
   swap nextfree dup >r 2! 2 cells r> + tov ;
 
 : bdconstant \ d --
   create , , does> 2@ dvdigit ;
 
-: vpush \ a n --	put string on stack
+: vpush \ a n --  put string on stack
   rez >xs nextfree xs@ over + tov xs> cmove ;
 
-: bpush \ a n --	put any number array on stack
-  nextfree over aligned		 \ a n nxt na
-  2dup + cell - 0!		      \ a n nxt na 
+: bpush \ a n --  put any number array on stack
+  nextfree over aligned     \ a n nxt na
+  2dup + cell - 0!          \ a n nxt na 
   over + tov              \ a n nxt
   swap cmove ;
 
-: bpusha \ a n --	put aligned number array on stack
+: bpusha \ a n --  put aligned number array on stack
   nextfree 2>r 2r@ swap cmove
   2r> + tov ;
 
-: bdupall \ v -- v u	      allocate array of same size as btos
+: bdupall \ v -- v u        allocate array of same size as btos
   nextfree len1 + tov ;
 
 : bdrop  cell bvp +! ;
@@ -232,7 +232,7 @@ vst! 	\ initialize stack för dynamical numbers
 : b@ \ -- v | ad --
   2@ bpusha ;
 
-: xstack!  x0 cell - xp ! x$0 xp @ ! ; xstack!	\ xtra stack
+: xstack!  x0 cell - xp ! x$0 xp @ ! ; xstack!  \ xtra stack
 : xp+ ( -- )  -cell xp +! ;
 : tox ( a -- )  xp+ xp @ ! ; 
 : xnext ( -- ad )  xp @ @ ;
@@ -251,7 +251,7 @@ vst! 	\ initialize stack för dynamical numbers
 : bx  ( -- v )  xfirst xnext over - bpusha ;
 : bx> ( -- v )  bx xdrop ;
 
-: by  \ -- v	y is the second value on x-stack
+: by  \ -- v  y is the second value on x-stack
   xsecond xfirst over - bpusha ;
 
 : bz  ( -- v )  xthird xsecond over - bpusha ;
@@ -288,24 +288,24 @@ vst! 	\ initialize stack för dynamical numbers
 
 : <vtop  \ delete unwanted leading asc zeros
   begin len1 2 <
-     if exit then nextfree 1- c@ 0=	
+     if exit then nextfree 1- c@ 0=  
   while -1 bvp @ +! 
   repeat ;
 
 : <top  \ delete unwanted leading zeros
   begin len1 cell > 0=
      if nextfree 0! exit
-     then nextfree cell - @ 0= 		
+     then nextfree cell - @ 0=     
   while -cell bvp @ +! 
   repeat nextfree 0! cell len1 3 and - 3 and bvp @ +! ; 
 
-: bs/mod \ v -- q | n -- r  	v=nq+r 
+: bs/mod \ v -- q | n -- r    v=nq+r 
   >xs bdupall nextfree cell - 0!
   0 0 len1 cell -
   do i second + @ swap xs@ um/mod i first + ! -cell
   +loop <top xsdrop bnip ;
 
-: vr< \ u v -- u v | -- f	compare numbers as asc strings
+: vr< \ u v -- u v | -- f  compare numbers as asc strings
   reztop <vtop vswap reztop <vtop vswap
   len2 len1 2dup <
   if 2drop true exit
@@ -317,7 +317,7 @@ vst! 	\ initialize stack för dynamical numbers
      then 2drop -1
   +loop zsdrop false ;
 
-: vr= \ u v -- u v | -- f	
+: vr= \ u v -- u v | -- f  
   vr< if false exit then
   vswap vr< if vswap false exit then vswap true ;
 
@@ -364,7 +364,7 @@ vst! 	\ initialize stack för dynamical numbers
   0 do bx> loop ;
 
 : bdepth \ -- n 
-  040 0					\ depth of stack
+  040 0          \ depth of stack
   do i nth 0= if i leave then loop ; 
 
 : v>b  \ convert asc-number to digital bignumber
@@ -373,10 +373,10 @@ vst! 	\ initialize stack för dynamical numbers
      if drop i 1+ 0! i pad - 1+ cell+ leave then
   loop bdrop bpush <top ; 
 
-: s>b \ -- v | n --	convert single to big
+: s>b \ -- v | n --  convert single to big
   0 <# #s #> vpush v>b ;
 
-: b>s  \ u -- | -- n	conv big to single
+: b>s  \ u -- | -- n  conv big to single
   first @ bdrop ;
 
 : d>b \ -- v | d --
@@ -385,14 +385,14 @@ vst! 	\ initialize stack för dynamical numbers
 : b>d  \ u -- | -- d
   top$ 5 < if @ 0 else 2@ swap then bdrop ;
 
-: v  bl parse vpush ; 		\ 'v 12345' put asc numb on tos
-: b  v v>b ;	       		\ put bigint on tos 
-: cl vst! xstack! ;		\ clear stacks
+: v  bl parse vpush ;     \ 'v 12345' put asc numb on tos
+: b  v v>b ;             \ put bigint on tos 
+: cl vst! xstack! ;    \ clear stacks
 
-: .v  cr bdepth ?dup		\ print asc numb stack
+: .v  cr bdepth ?dup    \ print asc numb stack
   if 0 do i nth i len# type cr loop then ;
 
-: .bytes cr bdepth ?dup		\ print byte string stack
+: .bytes cr bdepth ?dup    \ print byte string stack
   if 0 do i nth i len# 0
           do i over + c@ base @ >xs
              hex 0 <# # # #> type space xs> base !
@@ -400,19 +400,19 @@ vst! 	\ initialize stack för dynamical numbers
        loop
   then ;
 
-: b+_s>=f \ u v -- u+v		u >= v
+: b+_s>=f \ u v -- u+v    u >= v
   len2 nextfree over len1 - dup bvp @ +! erase
   0 >xs nextfree first 
   do i over - @ i @ 0 tuck d+ xs> 0 d+ >xs i ! cell
   +loop drop xs> ?dup if nextfree cell bvp @ +! ! then ;
 
-: b+ \ u v -- u+v		adding bigint
+: b+ \ u v -- u+v    adding bigint
   len2 len1 < 0=
   if b+_s>=f
   else bswap b+_s>=f 
   then bnip ;
 
-: br< \ u v -- u v | -- f	bigstack remain less
+: br< \ u v -- u v | -- f  bigstack remain less
   len2 len1 2dup u<
   if 2drop true exit
   then dup pad1 ! u>
@@ -423,7 +423,7 @@ vst! 	\ initialize stack för dynamical numbers
      then 2drop -cell
   +loop drop-all false ;
 
-: b< \ u v -- | --f		bigstack less
+: b< \ u v -- | --f    bigstack less
   br< bdrop bdrop ;
 
 : br= \ u v -- u v | -- f
@@ -467,7 +467,7 @@ vst! 	\ initialize stack för dynamical numbers
 : .x  xempty 0=
   if bx> cr br. recurse >bx then ;
 
-: gtx? \ v -- v | -- f		greater than value in bx?
+: gtx? \ v -- v | -- f    greater than value in bx?
   len1 xlen 2dup <
   if 2drop false exit then >
   if true exit then false 0 xlen cell -
@@ -476,9 +476,9 @@ vst! 	\ initialize stack för dynamical numbers
      if 0= leave then -cell
   +loop ;
 
-: +x>=y? \ v -- | -- f		add v to bx and compare with y
+: +x>=y? \ v -- | -- f    add v to bx and compare with y
   bx> b+ bx> br< >bx >bx 0=
-  dup if xdrop xdrop then ;	\ 2 xdrop when equal or greater
+  dup if xdrop xdrop then ;  \ 2 xdrop when equal or greater
 
 variable borrow
 : b~ \ u v -- |u-v| | -- f
@@ -497,18 +497,18 @@ variable borrow
 : |b-| \ u v -- |u-v|
   b~ drop ;
 
-: bsl \ n i -- n1 n0	      big shift left, n < 2^bits
+: bsl \ n i -- n1 n0        big shift left, n < 2^bits
   2dup bits swap - rshift -rot lshift ;
 
-: blshift  \ v -- u | n -- 		big left shift
+: blshift  \ v -- u | n --     big left shift
   bits/mod over 0= 
   if nip first dup rot cells dup >xs + len1 cmove> 
      xs@ bvp @ +! first xs> erase exit
-  then cells >ys			\ i  y=4[n/32]
-  ys@ first dup >xs + 			\ i f+4[n/32]  x=first
-  xs@ over len1 dup >zs cmove>		\ i f+4[n/32]  z=len1
+  then cells >ys      \ i  y=4[n/32]
+  ys@ first dup >xs +       \ i f+4[n/32]  x=first
+  xs@ over len1 dup >zs cmove>    \ i f+4[n/32]  z=len1
   xs@ ys@ erase
-  zs> over + dup xs! swap 0 >zs		\ i f+4[n/32]+len1 f+4[n/32]
+  zs> over + dup xs! swap 0 >zs    \ i f+4[n/32]+len1 f+4[n/32]
   ?do i @ over bsl zs> or i ! >zs cell +loop
   zs@ xs@ ! xs@ cell+ bvp @ ! drop drop-all <top ;
 
@@ -554,13 +554,13 @@ variable borrow
   while 1 xs+! 
   repeat drop xs> ;
 
-: blog~ \ v -- v | -- n		8(len-1)+log(byte0)+1
+: blog~ \ v -- v | -- n    8(len-1)+log(byte0)+1
   len1 z# - 1- 3 lshift msb@ log~ + ; \ n is the number of binary digits
 
 : blog~2 \ u v -- u v | -- n 
   len2 z#2 - 1- 3 lshift msb@2 log~ + ;
 
-: blog \ v -- | -- n	 integer part of 2-logarithm
+: blog \ v -- | -- n   integer part of 2-logarithm
   blog~ 1- bdrop ;
 
 : b1+ bone b+ ;
@@ -594,7 +594,7 @@ variable borrow
   do dup i @ um* xs> 0 d+ >xs last!> cell +loop 
   xs> nextfree cell - ! drop <top ; 
 
-: bitsblshift \ v -- w	       big shift left with number of bits
+: bitsblshift \ v -- w         big shift left with number of bits
   top$ over cell+ swap cmove>
   cell bvp @ +! 0 first ! ;
 
@@ -609,7 +609,7 @@ variable borrow
 
 \ 2^sxn+1=2*2^sxn-[2^sxn]^2*n/2^[2s] 
 \ q=t*x/2^[2n]
-: b/ \ u v -- q 	Newton-Ralphson on y=2^s/x-A 
+: b/ \ u v -- q   Newton-Ralphson on y=2^s/x-A 
   br< if bdrop bdrop bzero exit then          \ qoute < 1
   len1 cell > 0= 
   if b>s bs/mod drop exit then                \ denominator < 2^bits
@@ -632,27 +632,27 @@ variable foo
 1k bvariable bar
 1k bvariable den
 
-: barmod~ \ w -- v			w < d**2
+: barmod~ \ w -- v      w < d**2
   bdup
   bar b@ b*
-  foo @ brshift				\ w q
-  den b@ b* b- 				\ w-qd
+  foo @ brshift        \ w q
+  den b@ b* b-         \ w-qd
   den b@ br<
   if bdrop else b- then ;
 
-: barmod \ w -- v			w < d**2
+: barmod \ w -- v      w < d**2
   bdup den b@ br< 
   if b2drop exit 
   then bdrop bar b@ b*
-  foo @ brshift				\ w q
-  den b@ b* b- 				\ w-qd
+  foo @ brshift        \ w q
+  den b@ b* b-         \ w-qd
   den b@ br<
   if bdrop else b- then ;
 
-: >bar \ u -- 	 	u is the denominator; precalc for barmod
-  blog~ 2* dup foo ! 			\ foo = 2*bitlen
-  bone blshift bover b/ bar b! 		\ bar = 2^foo/u
-  den b! ;				\ den = u
+: >bar \ u --      u is the denominator; precalc for barmod
+  blog~ 2* dup foo !       \ foo = 2*bitlen
+  bone blshift bover b/ bar b!     \ bar = 2^foo/u
+  den b! ;        \ den = u
 
 : b** \ b a -- b^a
   first @ 0= if bdrop bdrop bone exit then
@@ -678,13 +678,13 @@ variable foo
 : bsqrtc \ w -- v
   b1- bsqrtf b1+ ;
 
-: bfaculty  \ v -- v!
+: bfactorial  \ v -- v!
   >bx bzero bone
   begin bswap b1+ gtx? bswap 0=
   while bover b*
   repeat bnip xdrop ;
 
-: bgcd \ v u -- w	greatest common divisor
+: bgcd \ v u -- w  greatest common divisor
   br< if bswap then
   begin btuck bmod br0=
   until bdrop ;
@@ -694,22 +694,22 @@ false [if]
   begin tuck 0 swap um/mod drop dup 0=
   until drop ;
 [then]
-: blcm \ v u -- w	least common multiple
+: blcm \ v u -- w  least common multiple
   bover bover b* brot brot bgcd b/ ;
 
 \ the square-and-multiply-algorithm
 : b**mod~ \ u v m -- u^v mod m
-  >bx blog~ bswap >bx bone 0	  		\ v 1 | x: m u | l[v] 0
-  do i bits/mod cells second + @		\ v w | x: m u | r celli
-     1 rot lshift and				\ v w | x: m u | celli & 2^r
-     if bx b* by bmod				\ v [w*u]
-     then bx bx> b* bx bmod >bx 		\ v [w*u] x<-[x*x]
+  >bx blog~ bswap >bx bone 0        \ v 1 | x: m u | l[v] 0
+  do i bits/mod cells second + @    \ v w | x: m u | r celli
+     1 rot lshift and        \ v w | x: m u | celli & 2^r
+     if bx b* by bmod        \ v [w*u]
+     then bx bx> b* bx bmod >bx     \ v [w*u] x<-[x*x]
   loop bnip xdrop xdrop ; 
 
 \ the square-and-multiply-algorithm with Barrett reduction ?
 : b**mod \ u v m -- u^v mod m
   bover bone b= if bnip bmod exit then
-  >bar blog~ bswap >bx bone 0	
+  >bar blog~ bswap >bx bone 0  
   do i bits/mod cells second + @
      1 rot lshift and
      if bx b* barmod 
@@ -1068,11 +1068,11 @@ cell 4 =
 : unit* ( i j -- k )
   xor 1+ ;
 
-: ufaculty ( u -- u! )
+: ufactorial ( u -- u! )
   dup 2 u< if drop 1 exit then
   dup 1- recurse * ;
 
-: umfaculty ( u -- ud )
+: umfactorial ( u -- ud )
   dup 2 u< if drop 1. exit then
   dup 1- recurse rot 1 m*/ ;
 
@@ -2268,7 +2268,7 @@ false [if]
 \ symetric group of permutations of 1...n, n<6
 : sym \ n -- | -- s 
   loc{ n } n 2 >
-  if n pcirc zfence n proll zfence zmerge n ufaculty #generate
+  if n pcirc zfence n proll zfence zmerge n ufactorial #generate
   else 2 = if ( 2 1 ) pgen else ( 1 ) pgen then
   then ;
 [then]
@@ -2285,11 +2285,11 @@ false [if]
   if >r 
      { r@ pcirc 
      ( r@ 2 - 1 do i loop r@ 1- r@ r@ 2 - )
-     } r> ufaculty 2/ #generate
+     } r> ufactorial 2/ #generate
   else >r 
      { ( r@ 2 do i loop 1 r@ )
      ( r@ 2 - 1 do i loop r@ 1- r@ r@ 2 - )
-     } r> ufaculty 2/ #generate
+     } r> ufactorial 2/ #generate
   then ;
 [then]
 \ quaternion group group of permutations of 1...8
@@ -2401,7 +2401,7 @@ false [if]
 
 : sym \ n -- | -- s
   n>str loc{ ad n }
-  n dup ufaculty dup 0
+  n dup ufactorial dup 0
   do ad n str>vect 
      ad n nextp
   loop swap 1+ * 2* negate >zst ;
@@ -2421,7 +2421,7 @@ false [if]
 
 : alt \ n -- | -- s
   n>str loc{ ad n }
-  n dup ufaculty dup 0
+  n dup ufactorial dup 0
   do ad n str>vect zdup oddperm
      if zdrop then ad n nextp
   loop swap 1+ * negate >zst ;
@@ -2625,7 +2625,7 @@ false [if]
   loop nip xs> lbits lshift +
   dup brshift ;
 
-: digit= \ u -- | n -- f	u=n?
+: digit= \ u -- | n -- f  u=n?
   len1 cell > if drop bdrop false exit then
   first @ = bdrop ;
 
@@ -2639,7 +2639,7 @@ false [if]
      if true ys! leave then
   loop xdrop xdrop bdrop bdrop ys> ;
 
-: bmiller \ u -- u | -- f		u odd >3
+: bmiller \ u -- u | -- f    u odd >3
   >bx bx btwo bx rs >zs bover bover
   bx pseudo1 ?dup
   if xdrop bdrop bdrop zsdrop exit
@@ -2730,6 +2730,7 @@ variable cf2
        1 of nr xt set2image endof
   endcase ;
 
+\ the set of gaps
 : gapz \ s -- s'
   0 locals| n | 
   foreach 1+
@@ -2744,7 +2745,7 @@ variable cf2
   begin dup primepower 0=
   while 1+
   repeat ;
-  
+
 : hist \ a1 ... ak k -- a1 ... ai i ak nk 
   2dup 0 locals| n k1 a k |
   begin dup a = k1 and
@@ -2761,12 +2762,47 @@ variable cf2
      if i pnr@ to flag leave then bdrop
   loop flag ;
 
-: sfacset \ b -- set
+: sfacset \ b -- b' set
   0                           \ count of the number of elements
   begin pi_plim 1 sfac ?dup 
   while >zst 2 - bnip
-  repeat bdrop >zst reduce ;
+  repeat >zst reduce ;
 
+1k bvariable alpha
+1k bvariable beta
+
+: bpollard1 \ w -- v | a -- f
+  len1 cell = if drop b>s pollard2 s>b true exit then
+  s>b bdup alpha b! beta b! bzero true
+  begin bdrop
+     alpha b@ bdup b* b1+ bover bmod alpha b!
+     beta b@ bdup b* b1+ bover bmod
+     bdup b* b1+ bover bmod beta b!
+     alpha b@ beta b@ |b-|
+     bover
+     bgcd 
+     br= if bdrop 0= exit then
+     bone br= bdrop 0=
+  until bnip ;
+
+: bpollard2 \ w -- v
+  bdup bprime if exit then
+  pi_plim 1 sfac ?dup if bdrop bdrop s>b exit then
+  0 begin 1+ dup bpollard1 until drop ;
+  
+: bfac1 \ w -- v1...vn
+  bdup bpollard2
+  bone br= bdrop
+  if bdrop exit
+  then btuck b/ recurse ;
+
+: bfac bfac1 bdrop ;
+  
+: bfac# \ w -- v1...vn | -- n
+  bdepth 1- bfac bdepth swap - ;
+
+: bsfactors \ w -- v1 ... vn set
+  sfacset bfac ;
 
 \ String stack
 
