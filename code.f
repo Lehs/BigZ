@@ -2546,14 +2546,14 @@ false [if]
 \ Testing conjectures
 
 : intcond \ low hi xt -- | -- s   "intervall condition"
-  loc{ xt } 
-  swap 0 -rot
+  locals| xt | 
+  0 -rot swap 
   ?do i xt execute 
      if i >zst 1+ then
   loop 2* negate >zst ;
 
 : setcond \ xt -- | s -- s'       "set condition"
-  loc{ xt } 0
+  locals| xt | 0
   foreach
   ?do zst> dup xt execute
      if >xst 1+ else drop then
@@ -2562,7 +2562,7 @@ false [if]
   loop 2* negate >zst ;
 
 : intimage \ low hi xt -- | -- s  "intervall image"
-  loc{ xt } 
+  locals| xt | 
   swap 2dup
   ?do i xt execute >zst
   loop - 2* negate >zst
@@ -2570,7 +2570,7 @@ false [if]
 ;
 
 : setimage \ xt -- | s -- s'      "set image"
-  loc{ xt } 0
+  locals| xt | 0
   foreach 
   ?do zst> xt execute >xst 1+
   loop dup 0
@@ -2584,7 +2584,7 @@ false [if]
 : foo dup totients mod ;        \ x ? x(mod ?(x)) Euler's totient.
 
 : paircond \ xt -- | s -- s'
-  loc{ xt } 0
+  locals| xt | 0
   foreach
   ?do zdup zet> drop xt execute
      if zst xst setmove 1+ else zdrop then
@@ -2592,7 +2592,7 @@ false [if]
   xst zst setmove ;
 
 : pairimage \ xt -- | s -- s'
-  loc{ xt } 0
+  locals| xt | 0
   foreach
   ?do 1+ zet> drop xt execute >xst
   loop dup 0 
@@ -2604,7 +2604,7 @@ false [if]
 : divide swap mod 0= ; 
 
 : factorset \ n -- set
-  pollard# loc{ n }
+  pollard# locals| n |
   n 0 do >zst loop
   n 2* negate >zst 
   set-sort 
